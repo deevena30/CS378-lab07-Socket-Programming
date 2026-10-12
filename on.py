@@ -1,5 +1,6 @@
 import socket
 import sys
+import struct
 
 config_file = sys.argv[1]
 
@@ -27,3 +28,8 @@ while True:
     if cnt > n_nodes:
         break
     print("connected! vn", addr)
+    from_vn = conn.recv(6)
+    ip_addr = from_vn[:4]
+    port = struct.unpack("!H", from_vn[4:6])
+    print(socket.inet_ntoa(ip_addr), port)
+    
