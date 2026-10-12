@@ -20,8 +20,10 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(("10.53.0.64", 5000))
 server.listen()
 
-
+cnt = 0
 while True:
     conn, addr = server.accept()
+    cnt = cnt + 1
+    if cnt > n_nodes:
+        break
     print("connected! vn", addr)
-
