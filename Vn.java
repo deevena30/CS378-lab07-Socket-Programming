@@ -4,11 +4,13 @@ import java.io.*;
 public  class Vn{
     public  static void main(String []a) throws Exception
     {
-        Socket s=new Socket(a[0],5000);
+        Socket s=new Socket(a[0],5001);
+        s.setReuseAddress(true);
         DataOutputStream out=new DataOutputStream(s.getOutputStream());
         DataInputStream in=new DataInputStream(s.getInputStream());
         out.write(InetAddress.getByName(a[1]).getAddress());
-        out.writeShort(Integer.parseInt(a[2]));
+        out.writeInt(Integer.parseInt(a[2]));
+        out.flush();
 
         while(true)
         {
@@ -20,12 +22,13 @@ public  class Vn{
                     byte[] ip=new byte[4];
                     in.readFully(ip);
                     String ipAddress = InetAddress.getByAddress(ip).getHostAddress();
-                    int port=in.readShort();
+                    int port=in.readInt();
                     int cost=in.readInt(); 
                     details+="ID: "+id+" IP: "+ipAddress+" Port: "+port+" Cost: "+cost+"\n";
             }
             System.out.println("Link Message");
             System.out.print(details);
+            System.out.flush();
         }
     }
 }
