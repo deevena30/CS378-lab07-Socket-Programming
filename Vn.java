@@ -6,7 +6,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.io.*;
-
+// usage is java Vn ONIP VNIP udpPort
 class link
 {
    int nid;
@@ -48,7 +48,7 @@ public  class Vn{
         //tcpChannel.bind(tcpAddress)
 
         tcpChannel.configureBlocking(false);
-
+ 
         for(int i=0;i<26;i++)ncost[i]=-1;
         for(int i=0;i<26;i++)seq[i]=-1;
         for(int i=0;i<26;i++)
@@ -86,9 +86,9 @@ public  class Vn{
             Set<SelectionKey> keys=select.selectedKeys();
             Iterator<SelectionKey> it=keys.iterator();
             while(it.hasNext())
-            {
+            { 
                 SelectionKey key=it.next();
-                it.remove();
+                it.remove(); // is this needed? 
 
                 if(key.channel()==tcpChannel)
                 {
@@ -96,7 +96,7 @@ public  class Vn{
                     if(r==-1 || r==0) continue;
 
                     tcpBuffer.flip();
-
+  
                     while(tcpBuffer.remaining()>=4)
                     {
                         int n=tcpBuffer.getInt(tcpBuffer.position());
@@ -247,12 +247,12 @@ public  class Vn{
     {
         byte[] packet=new byte[buf.remaining()];
         buf.get(packet);
-
          for(int i=0;i<26;i++)
          {
             if(ncost[i]<=0)continue;
             InetSocketAddress addr=new InetSocketAddress(ninet[i],nport[i]);
-            udpChannel.send(ByteBuffer.wrap(packet),addr);  // bug cause when used buf directly
+            udpChannel.send(ByteBuffer.wrap(packet),addr);  
+            // buf.rewind(); 
          }
     }
 
