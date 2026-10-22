@@ -30,17 +30,25 @@ public  class Vn{
         inetIp=InetAddress.getByName(a[1]); 
         udpPort=Integer.parseInt(a[2]);
         
-        udpChannel=DatagramChannel.open();
-        udpChannel.configureBlocking(false);
-        InetSocketAddress udpAddress=new InetSocketAddress(inetIp,udpPort);
-        udpChannel.bind(udpAddress);
+        udpChannel=null;
+        InetSocketAddress udpAddress = new InetSocketAddress(inetIp, udpPort);
+        try{
+            udpChannel=DatagramChannel.open();
+            udpChannel.configureBlocking(false);
+            // InetSocketAddress udpAddress=new InetSocketAddress(inetIp,udpPort);
+            udpChannel.bind(udpAddress);
+        }
 
-
+        catch (IOException e)
+        {
+            System.err.println("error:cannot bind udp port"+udpPort+":"+e.getMessage());
+            System.exit(1);
+        }
         // Socket s=new Socket(a[0],5001);
         // s.setReuseAddress(true);
 
         InetAddress onInetIp=InetAddress.getByName(a[0]);
-        int onPort=5001;
+        int onPort=5000;
 
         SocketChannel tcpChannel=SocketChannel.open();
         InetSocketAddress tcpAddress=new InetSocketAddress(onInetIp,onPort);
@@ -75,7 +83,7 @@ public  class Vn{
         ByteBuffer udpBuffer=ByteBuffer.allocate(4096);
         ByteBuffer tcpBuffer=ByteBuffer.allocate(4096);
         
-        long next=System.currentTimeMillis()+15000;
+        long next=System.currentTimeMillis()+10000;
 
         tcpChannel.register(select, SelectionKey.OP_READ);
         udpChannel.register(select, SelectionKey.OP_READ);
@@ -93,10 +101,13 @@ public  class Vn{
                 if(key.channel()==tcpChannel)
                 {
                     int r=tcpChannel.read(tcpBuffer);
-                    if(r==-1 || r==0) continue;
-
+                    if(r==-1){
+                        System.err.println("On is closed :)");
+                        System.exit(1);
+                    }
+                    if(r==0) continue;
                     tcpBuffer.flip();
-  
+                    
                     while(tcpBuffer.remaining()>=4)
                     {
                         int n=tcpBuffer.getInt(tcpBuffer.position());
@@ -107,6 +118,7 @@ public  class Vn{
                         tcpBuffer.getInt();
                         for(int i=0;i<26;i++)ncost[i]=-1;
 
+                        // System.out.println("Link Message:");
                         for(int i=0;i<n;i++)
                         {
                             int id=tcpBuffer.get()-'A';
@@ -115,6 +127,8 @@ public  class Vn{
                             ninet[id]=InetAddress.getByAddress(ip);
                             nport[id]=tcpBuffer.getInt();
                             ncost[id]=tcpBuffer.getInt();
+                            // System.out.println("ID: "+(char)(id+'A')+", Cost: "+ncost[id]);
+                            // printLinkMessage();
                         }
                         if(myIdx==-1)
                         {
@@ -126,6 +140,9 @@ public  class Vn{
                                }
                             }
                         }
+                        System.out.println("TCP LINK-STATE received, n = " + n);
+                        printLinkMessage();
+                        printGraph();
                         originate();
                     }
                     tcpBuffer.compact();
@@ -143,8 +160,12 @@ public  class Vn{
 
             if(System.currentTimeMillis()>=next)
             {
-                originate();
-                printGraph();  
+                if(myIdx!=-1){
+                    System.out.println("=== PERIODIC UPDATE ===");
+                    printLinkMessage();
+                    originate();
+                    printGraph(); 
+                }
                 next =System.currentTimeMillis()+15000;
             }
             
@@ -188,7 +209,6 @@ public  class Vn{
         // for each neighbor
         //nbrId=j-> 1 byte
         // cost-4 bytes 
-        
         int nNbrs=0;
         for(int i=0;i<26;i++)if(ncost[i]>0)nNbrs++;
         ByteBuffer buf=ByteBuffer.allocate(1+4+4+5*nNbrs);
@@ -252,10 +272,17 @@ public  class Vn{
             if(ncost[i]<=0)continue;
             InetSocketAddress addr=new InetSocketAddress(ninet[i],nport[i]);
             udpChannel.send(ByteBuffer.wrap(packet),addr);  
-            // buf.rewind(); 
          }
     }
-
+    static void printLinkMessage() {
+    System.out.println("Link Message:");
+    for (int i = 0; i < 26; i++) {
+        if (ncost[i] != -1) {
+            System.out.println("ID: " + (char)(i + 'A')
+                               + ",Cost: " + ncost[i]);
+        }
+    }
+    }
     static void printGraph()
     {
         for(int i=0;i<26;i++)

@@ -39,7 +39,7 @@ def linkMsgToVn(node):
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server.bind(("192.168.1.102", 5000))
+server.bind(("172.20.15.244", 5000))
 server.listen(26)
 
 vnIp=[]
@@ -70,6 +70,7 @@ for i in range(n_nodes):
 for i  in range(n_nodes):
     conns[i].send(linkMsgToVn(i)) 
 
+server.setblocking(False)
 last=os.path.getmtime(config_file)
 while True:
     while True:
