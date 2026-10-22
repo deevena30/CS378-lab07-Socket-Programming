@@ -25,9 +25,11 @@ def parse_config(config_file):
 
 n_nodes=parse_config(config_file)
 
-
-
 def linkMsgToVn(node):
+    if(node>=n_nodes):
+        msg = struct.pack("!I", 1)
+        msg += struct.pack("!c4sII", bytes([65+node]), islands_conn[node-n_nodes][0], islands_conn[node-n_nodes][1], 0)
+        return msg
     neighbors=[j for j in range(n_nodes) if cost[node][j]!=-1]
     msg=struct.pack("!I",len(neighbors))
     for j in neighbors:
@@ -37,12 +39,13 @@ def linkMsgToVn(node):
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server.bind(("192.168.1.102", 5001))
+server.bind(("192.168.1.102", 5000))
 server.listen(26)
 
 vnIp=[]
 vnPorts=[]
 conns=[]
+islands_conn = []
 
 def recv_exact(conn, n):
     buf = b""
@@ -57,6 +60,7 @@ for i in range(n_nodes):
     conn, addr = server.accept()
     conns.append(conn)
     from_vn = recv_exact(conn, 8) 
+    #from_vn = conn.recv(8)
     ip_addr = from_vn[:4]
     port = struct.unpack("!I", from_vn[4:8])[0]
     vnIp.append(ip_addr) # raw bytes
@@ -68,10 +72,24 @@ for i  in range(n_nodes):
 
 last=os.path.getmtime(config_file)
 while True:
+    while True:
+       try:
+           conn,addr=server.accept()
+       except BlockingIOError:
+           break
+       from_island=recv_exact(conn,8)
+       node=n_nodes+len(islands_conn)
+       if(node>=26):
+           conn.close()
+           continue
+       islands_conn.append((from_island[:4],struct.unpack("!I",from_island[4:8])[0],conn))
+       conn.send(linkMsgToVn(node))
+       print("Connected island",chr(65+node),addr)
+
+    time.sleep(.5)
     m=os.path.getmtime(config_file)
     if m!=last:
         last=m
-        time.sleep(.5)
         parse_config(config_file)
         print("config file modified")
         for i in range(n_nodes):
