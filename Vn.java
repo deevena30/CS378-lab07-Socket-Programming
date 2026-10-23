@@ -316,6 +316,7 @@ public  class Vn{
         {
             if(!nExists[i]) continue;
             System.out.print((char)('A' + i) + ": ");
+            System.out.print(" ".repeat(i * 2));
             for(int j=i+1;j<26;j++)
             {
                 if(!nExists[j]) continue;
