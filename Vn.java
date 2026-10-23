@@ -59,7 +59,7 @@ public  class Vn{
         tcpChannel.connect(tcpAddress);
         //tcpChannel.bind(tcpAddress)
 
-        tcpChannel.configureBlocking(false);
+        // tcpChannel.configureBlocking(false);
  
         for(int i=0;i<26;i++)ncost[i]=-1;
         for(int i=0;i<26;i++)seq[i]=0;
@@ -81,7 +81,8 @@ public  class Vn{
         reg.put(inetIp.getAddress());
         reg.putInt(udpPort);
         reg.flip();
-        tcpChannel.write(reg);
+        tcpChannel.write(reg); //a nonblocking write can send fewer bytes than requested
+        tcpChannel.configureBlocking(false);
 
         Selector select=Selector.open();
         ByteBuffer udpBuffer=ByteBuffer.allocate(4096);
@@ -151,8 +152,8 @@ public  class Vn{
                         System.out.println("TCP LINK-STATE received, n = " + n);
                         printLinkMessage();
                         originate();
-                        printGraph();
-                        System.out.println("==============================================\n");
+                        // printGraph();
+                        // System.out.println("==============================================\n");
 
                     }
                     tcpBuffer.compact();
@@ -335,8 +336,6 @@ public  class Vn{
             + ", cost=" + links[i].cost + ")");
         }
         System.out.println("]");
-        System.out.println();
-        System.out.println();
     }
 }
 

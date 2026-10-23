@@ -6,11 +6,16 @@ import time
 
 config_file = sys.argv[1]
 
-cost=[[-1 for _ in range(26)] for _ in range(26)]
-for i in range(26):
-    cost[i][i]=0
+# cost=[[-1 for _ in range(26)] for _ in range(26)]
+# for i in range(26):
+#     cost[i][i]=0
 
 def parse_config(config_file):
+    global cost
+    cost=[[-1 for _ in range(26)] for _ in range(26)]
+    for i in range(26):
+        cost[i][i]=0
+
     with open(config_file, 'r') as fi:
         cnt=0
         for line in fi:
@@ -68,7 +73,7 @@ for i in range(n_nodes):
     print("connected  vn",chr(65+i),addr, port)
 
 for i  in range(n_nodes):
-    conns[i].send(linkMsgToVn(i)) 
+    conns[i].sendall(linkMsgToVn(i)) #sendall continues to send all the data (required data in chunks) even though interrupts or errors occured 
 
 server.setblocking(False)
 last=os.path.getmtime(config_file)
@@ -84,7 +89,7 @@ while True:
            conn.close()
            continue
        islands_conn.append((from_island[:4],struct.unpack("!I",from_island[4:8])[0],conn))
-       conn.send(linkMsgToVn(node))
+       conn.sendall(linkMsgToVn(node))
        print("Connected island",chr(65+node),addr)
 
     time.sleep(.5)
