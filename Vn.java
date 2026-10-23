@@ -1,4 +1,7 @@
 import java.util.*;
+
+import javax.swing.text.StyledEditorKit;
+
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
@@ -23,6 +26,7 @@ public  class Vn{
     static InetAddress inetIp;
     static int udpPort;
     static DatagramChannel udpChannel;
+    static boolean[] nExists = new boolean[26];
 
     public  static void main(String []a) throws Exception
     {
@@ -58,7 +62,7 @@ public  class Vn{
         tcpChannel.configureBlocking(false);
  
         for(int i=0;i<26;i++)ncost[i]=-1;
-        for(int i=0;i<26;i++)seq[i]=-1;
+        for(int i=0;i<26;i++)seq[i]=0;
         for(int i=0;i<26;i++)
           for(int j=0;j<26;j++)
         {
@@ -127,6 +131,7 @@ public  class Vn{
                             ninet[id]=InetAddress.getByAddress(ip);
                             nport[id]=tcpBuffer.getInt();
                             ncost[id]=tcpBuffer.getInt();
+                            nExists[id] = true;
                             // System.out.println("ID: "+(char)(id+'A')+", Cost: "+ncost[id]);
                             // printLinkMessage();
                         }
@@ -136,14 +141,19 @@ public  class Vn{
                             {
                                if(ncost[i]==0)
                                {
-                                myIdx=i; break;
+                                myIdx=i;
+                                nExists[myIdx]=true;
+                                break;
                                }
                             }
                         }
+                        System.out.println("\n========== TOPOLOGY UPDATE FROM ON ==========");
                         System.out.println("TCP LINK-STATE received, n = " + n);
                         printLinkMessage();
-                        // printGraph();
                         originate();
+                        printGraph();
+                        System.out.println("==============================================\n");
+
                     }
                     tcpBuffer.compact();
                 }
@@ -223,6 +233,19 @@ public  class Vn{
             buf.putInt(ncost[i]);
         } 
         buf.flip();
+        link[] links = new link[nNbrs];
+        int k = 0;
+
+        for (int i = 0; i < 26; i++) {
+            if (ncost[i] > 0) {
+                links[k] = new link();
+                links[k].nid = i;
+                links[k].cost = ncost[i];
+                k++;
+            }
+        }
+
+        printlsp(myIdx, seq[myIdx], links);
         flood(buf);
     }
   
@@ -248,7 +271,8 @@ public  class Vn{
             return;
          
          seq[originId]=originSeq;
-
+         nExists[originId] = true;
+         printlsp(originId, originSeq, links);
          for(int i=0;i<26;i++)
          {
             if(i==originId)continue;
@@ -258,6 +282,7 @@ public  class Vn{
 
          for(link l: links)
          {
+            nExists[l.nid] = true;
             graph[originId][l.nid]=l.cost;
             graph[l.nid][originId]=l.cost;
          }
@@ -285,13 +310,33 @@ public  class Vn{
     }
     static void printGraph()
     {
+        System.out.println("--------------Graph---------------");
         for(int i=0;i<26;i++)
         {
+            if(!nExists[i]) continue;
+            System.out.print((char)('A' + i) + ": ");
             for(int j=i+1;j<26;j++)
             {
+                if(!nExists[j]) continue;
                 System.out.print(graph[i][j]+" ");
             }
-            System.out.println("\n");
+            System.out.println();
         }
+        System.out.println("-------------------------------");
+    }
+    static void printlsp(int originId, int sequence, link[] links){
+        System.out.print("--LSP--origin= "+(char)('A' + originId) +
+                            ", seqNum= "+ sequence + ", neighbours=[");
+
+        for(int i = 0; i< links.length; i++){
+            if(i > 0) System.out.print(",");
+
+            System.out.print("("+ (char)('A' + links[i].nid)
+            + ", cost=" + links[i].cost + ")");
+        }
+        System.out.println("]");
+        System.out.println();
+        System.out.println();
     }
 }
+

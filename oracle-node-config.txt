@@ -8,7 +8,7 @@
 # First row is for virtual node A, next for B, and so on
 # Example matrix for the example network shown in instructions is below
 # Costs from A to B, C, D, E
-1
-# Costs from B to C, D, E; note the tab at the beginning, to overall give view of upper-right triangle
+7
+# Costs from B to C, D, E; note the tab at the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 beginning, to overall give view of upper-right triangle
 # Costs from C to D, E
 # Costs from D to E
