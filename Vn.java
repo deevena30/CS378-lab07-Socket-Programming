@@ -142,7 +142,7 @@ public  class Vn{
                         }
                         System.out.println("TCP LINK-STATE received, n = " + n);
                         printLinkMessage();
-                        printGraph();
+                        // printGraph();
                         originate();
                     }
                     tcpBuffer.compact();
@@ -278,8 +278,8 @@ public  class Vn{
     System.out.println("Link Message:");
     for (int i = 0; i < 26; i++) {
         if (ncost[i] != -1) {
-            System.out.println("ID: " + (char)(i + 'A')
-                               + ",Cost: " + ncost[i]);
+            
+            System.out.println("ID: " + (char)(i + 'A')+ ", Ipddr: "+ninet[i].getHostAddress()+", Port: "+nport[i]+ ", Cost: " + ncost[i]);
         }
     }
     }
